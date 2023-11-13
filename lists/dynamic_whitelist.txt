@@ -1,2 +1,19 @@
 # connect.facebook.net
 api-js.datadome.co
+cloud.answerhub.com
+gov
+inc.com
+lenta.ru
+smartsheet.com
+ae01.alicdn.com
+app.link
+browser.pipe.aria.microsoft.com
+concierge.analytics.console.aws.a2z.com
+geo2.adobe.com
+get3.adobe.com
+mobile.pipe.aria.microsoft.com
+s.youtube.com
+settings-win.data.microsoft.com
+teslarati-com-edge.ntv.io
+v10.events.data.microsoft.com
+whoami.akamai.net
