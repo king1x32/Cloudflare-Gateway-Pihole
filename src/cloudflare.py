@@ -34,9 +34,9 @@ async def create_list(name: str, domains: list[str], session: aiohttp.ClientSess
         f"https://api.cloudflare.com/client/v4/accounts/{CF_IDENTIFIER}/gateway/lists",
         json={
             "name": name,
-            "description": "Created by script.",
+            "description": "Ads & Tracking Domains",
             "type": "DOMAIN",
-            "items": [{"value": d} for d in domains],
+            "items": [{"value": domain} for domain in domains],
         },
     ) as resp:
         if resp.status != 200:
@@ -76,11 +76,13 @@ async def create_gateway_policy(
         f"https://api.cloudflare.com/client/v4/accounts/{CF_IDENTIFIER}/gateway/rules",
         json={
             "name": name,
-            "description": "Created by script.",
+            "description": "Block Ads & Tracking",
             "action": "block",
             "enabled": True,
             "filters": ["dns"],
-            "traffic": "or".join([f"any(dns.domains[*] in ${l})" for l in list_ids]),
+            "traffic": "or".join(
+                [f"any(dns.domains[*] in ${list_id})" for list_id in list_ids]
+            ),
             "rule_settings": {
                 "block_page_enabled": False,
             },
@@ -99,9 +101,16 @@ async def update_gateway_policy(
         f"https://api.cloudflare.com/client/v4/accounts/{CF_IDENTIFIER}/gateway/rules/{policy_id}",
         json={
             "name": name,
+            "description": "Block Ads & Tracking",
             "action": "block",
             "enabled": True,
-            "traffic": "or".join([f"any(dns.domains[*] in ${l})" for l in list_ids]),
+            "filters": ["dns"],
+            "traffic": "or".join(
+                [f"any(dns.domains[*] in ${list_id})" for list_id in list_ids]
+            ),
+            "rule_settings": {
+                "block_page_enabled": False,
+            },
         },
     ) as resp:
         if resp.status != 200:
@@ -112,28 +121,12 @@ async def update_gateway_policy(
 
 @aiohttp_session
 async def delete_gateway_policy(
-    policy_name_prefix: str, session: aiohttp.ClientSession
+    policy_id: str, session: aiohttp.ClientSession
 ):
-    async with session.get(
-        f"https://api.cloudflare.com/client/v4/accounts/{CF_IDENTIFIER}/gateway/rules",
-    ) as resp:
-        if resp.status != 200:
-            raise Exception("Failed to get Cloudflare firewall policies")
-
-        policies = (await resp.json())["result"] or []
-        policy_to_delete = next(
-            (p for p in policies if p["name"].startswith(policy_name_prefix)), None
-        )
-
-        if not policy_to_delete:
-            return 0
-
-        policy_id = policy_to_delete["id"]
-
     async with session.delete(
         f"https://api.cloudflare.com/client/v4/accounts/{CF_IDENTIFIER}/gateway/rules/{policy_id}",
     ) as resp:
         if resp.status != 200:
             raise Exception("Failed to delete Cloudflare gateway firewall policy")
 
-        return 1
+        return (await resp.json())["result"]
