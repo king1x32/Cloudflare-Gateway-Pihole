@@ -1,10 +1,8 @@
 import os
-import requests
+import http.client
+from urllib.parse import urlparse
 from configparser import ConfigParser
-from src import (
-    info,
-    convert
-)
+from src import info, convert, silent_error
 
 class DomainConverter:
     def __init__(self):
@@ -46,9 +44,19 @@ class DomainConverter:
         return urls
 
     def download_file(self, url):
-        r = requests.get(url, allow_redirects=True)
-        info(f"Downloaded file from {url} File size: {len(r.content)}")
-        return r.text
+        parsed_url = urlparse(url)
+        if parsed_url.scheme == "https":
+            conn = http.client.HTTPSConnection(parsed_url.netloc)
+        else:
+            conn = http.client.HTTPConnection(parsed_url.netloc)
+        conn.request("GET", parsed_url.path)
+        response = conn.getresponse()
+        if response.status != 200:
+            silent_error(f"Failed to download file from {url}, status code: {response.status}")
+        data = response.read().decode('utf-8')
+        conn.close()
+        info(f"Downloaded file from {url} File size: {len(data)}")
+        return data
         
     def process_urls(self):
         block_content = ""
@@ -58,6 +66,7 @@ class DomainConverter:
         for url in self.whitelist_urls:
             white_content += self.download_file(url)
         
+        # Check for dynamic blacklist and whitelist in environment variables
         dynamic_blacklist = os.getenv("DYNAMIC_BLACKLIST", "")
         dynamic_whitelist = os.getenv("DYNAMIC_WHITELIST", "")
         

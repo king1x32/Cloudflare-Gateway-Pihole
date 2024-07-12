@@ -1,4 +1,0 @@
-loguru
-tenacity
-requests
-python-dotenv
