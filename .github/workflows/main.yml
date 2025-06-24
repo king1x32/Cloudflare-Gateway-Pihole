@@ -18,18 +18,15 @@ jobs:
       WHITELIST_URLS: ${{ vars.WHITELIST_URLS }}
       DYNAMIC_BLACKLIST: ${{ vars.DYNAMIC_BLACKLIST }}
       DYNAMIC_WHITELIST: ${{ vars.DYNAMIC_WHITELIST }}
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@main
         with:
           fetch-depth: 0
-
       - name: Install Python
         uses: actions/setup-python@main
         with:
           python-version: 3.11
-        
       - name: Cache Data
         id: cache-cloudflare
         uses: actions/cache@main
@@ -38,6 +35,13 @@ jobs:
           key: ${{ runner.os }}-cloudflare-cache-${{ github.run_id }}
           restore-keys: |
             ${{ runner.os }}-cloudflare-cache-
-      
-      - name: Cloudflare Gateway Zero Trust 
+      - name: Cloudflare Gateway Zero Trust
         run: python -m src run
+  keepalive:
+    name: Keepalive Workflow
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: liskin/gh-workflow-keepalive@v1
